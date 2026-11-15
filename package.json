@@ -1,0 +1,9 @@
+{
+  "name": "drama-watchlist",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "sass static/scss/style.scss:static/css/style.css",
+    "watch": "sass --watch static/scss/style.scss:static/css/style.css"
+  }
+}

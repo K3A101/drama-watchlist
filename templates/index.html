@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drama Watchlist</title>
+  <link rel="stylesheet" href="../static/css/style.css">
+  <script src="../static/js/main.js" defer></script>
+</head>
+<body>
+  <header class="header">
+    <div class="header__inner container">
+      <h1 class="header__title">Drama Watchlist</h1>
+      <div class="header__actions">
+        <button class="button button--ghost" id="export-button" type="button">Export</button>
+        <button class="button button--ghost" id="import-button" type="button">Import</button>
+        <input class="visually-hidden" id="import-input" type="file" accept="application/json" tabindex="-1" aria-hidden="true">
+        <button class="button" id="add-button" type="button">+ Add drama</button>
+      </div>
+    </div>
+    <nav class="nav container" aria-label="Filter by status">
+      <ul class="nav__list">
+        <li><button class="nav__item nav__item--active" type="button" data-filter="all" aria-pressed="true">All <span class="nav__count" data-count="all">0</span></button></li>
+        <li><button class="nav__item" type="button" data-filter="watching" aria-pressed="false">Watching <span class="nav__count" data-count="watching">0</span></button></li>
+        <li><button class="nav__item" type="button" data-filter="completed" aria-pressed="false">Completed <span class="nav__count" data-count="completed">0</span></button></li>
+        <li><button class="nav__item" type="button" data-filter="dropped" aria-pressed="false">Dropped <span class="nav__count" data-count="dropped">0</span></button></li>
+        <li><button class="nav__item" type="button" data-filter="plan" aria-pressed="false">Plan to watch <span class="nav__count" data-count="plan">0</span></button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="toolbar">
+      <label class="visually-hidden" for="search">Search titles</label>
+      <input class="form__input toolbar__search" id="search" type="search" placeholder="Search titles…">
+      <label class="visually-hidden" for="sort">Sort by</label>
+      <select class="form__input toolbar__sort" id="sort">
+        <option value="added">Recently added</option>
+        <option value="title">Title A–Z</option>
+        <option value="rating">Highest rated</option>
+      </select>
+    </div>
+
+    <ul class="cards" id="cards"></ul>
+    <p class="empty" id="empty" hidden></p>
+  </main>
+
+  <template id="card-template">
+    <li class="card">
+      <div class="card__poster">
+        <img class="card__image" alt="" loading="lazy">
+        <span class="card__placeholder" aria-hidden="true">🎬</span>
+        <span class="card__status"></span>
+      </div>
+      <div class="card__body">
+        <h3 class="card__title"><button class="card__button" type="button"></button></h3>
+        <p class="card__rating"></p>
+        <p class="card__notes"></p>
+      </div>
+    </li>
+  </template>
+
+  <dialog class="modal" id="drama-dialog" aria-labelledby="dialog-title">
+    <form class="form" id="drama-form" novalidate>
+      <h2 class="modal__title" id="dialog-title">Add drama</h2>
+      <input type="hidden" name="dramaId">
+
+      <div class="form__group">
+        <label class="form__label" for="title">Title</label>
+        <input class="form__input" id="title" name="title" type="text" required autocomplete="off">
+        <p class="form__error" id="title-error" hidden>Please enter a title.</p>
+      </div>
+
+      <div class="form__row">
+        <div class="form__group">
+          <label class="form__label" for="status">Status</label>
+          <select class="form__input" id="status" name="status">
+            <option value="watching">Watching</option>
+            <option value="completed">Completed</option>
+            <option value="dropped">Dropped</option>
+            <option value="plan">Plan to watch</option>
+          </select>
+        </div>
+
+        <fieldset class="form__group rating">
+          <legend class="form__label">Rating</legend>
+          <div class="rating__row">
+            <div class="rating__stars">
+              <input class="rating__input" type="radio" name="rating" value="5" id="rating-5">
+              <label class="rating__star" for="rating-5"><span aria-hidden="true">★</span><span class="visually-hidden">5 stars</span></label>
+              <input class="rating__input" type="radio" name="rating" value="4" id="rating-4">
+              <label class="rating__star" for="rating-4"><span aria-hidden="true">★</span><span class="visually-hidden">4 stars</span></label>
+              <input class="rating__input" type="radio" name="rating" value="3" id="rating-3">
+              <label class="rating__star" for="rating-3"><span aria-hidden="true">★</span><span class="visually-hidden">3 stars</span></label>
+              <input class="rating__input" type="radio" name="rating" value="2" id="rating-2">
+              <label class="rating__star" for="rating-2"><span aria-hidden="true">★</span><span class="visually-hidden">2 stars</span></label>
+              <input class="rating__input" type="radio" name="rating" value="1" id="rating-1">
+              <label class="rating__star" for="rating-1"><span aria-hidden="true">★</span><span class="visually-hidden">1 star</span></label>
+            </div>
+            <button class="button button--ghost button--small" id="clear-rating" type="button">Clear</button>
+          </div>
+        </fieldset>
+      </div>
+
+      <fieldset class="form__group form__fieldset">
+        <legend class="form__label">Poster</legend>
+        <div class="form__poster">
+          <div class="form__preview" id="image-preview" hidden>
+            <img class="form__preview-image" id="preview-image" alt="Poster preview">
+            <button class="button button--ghost button--small" id="remove-image" type="button">Remove image</button>
+          </div>
+          <div class="form__poster-inputs">
+            <label class="form__label form__label--small" for="image-file">Upload an image</label>
+            <input class="form__file" id="image-file" type="file" accept="image/*">
+            <label class="form__label form__label--small" for="image-url">…or paste an image link</label>
+            <input class="form__input" id="image-url" type="url" placeholder="https://…" autocomplete="off">
+            <p class="form__error" id="preview-error" hidden>This image couldn't load. The link may be wrong or expired.</p>
+            <p class="form__hint">From Notion: right-click the image → Copy image address. Images uploaded <em>to</em> Notion get links that stop working after a while. For those, download the image and upload it here instead.</p>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="form__group">
+        <label class="form__label" for="notes">Notes</label>
+        <textarea class="form__input" id="notes" name="notes" rows="3" placeholder="Thoughts, favourite scenes, why you dropped it…"></textarea>
+      </div>
+
+      <div class="form__actions">
+        <button class="button button--danger form__delete" id="delete-button" type="button" hidden>Delete</button>
+        <button class="button button--ghost" id="cancel-button" type="button">Cancel</button>
+        <button class="button" type="submit">Save</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>
